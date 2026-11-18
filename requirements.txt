@@ -1,0 +1,6 @@
+click
+py7zr
+picklescan
+modelscan
+fickling
+numpy

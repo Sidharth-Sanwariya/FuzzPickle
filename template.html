@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="classic">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FuzzPickle Security Audit – Interactive Report</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:70px;scroll-behavior:smooth}
+*{box-sizing:border-box}
+[data-theme=obsidian]{--bg:#0b1220;--panel:#121b2e;--text:#e6ecf8;--muted:#8a9ab8;--line:#22304d;--accent:#4f8cff;--ok:#2fd39a;--bad:#ff4d6a;--warn:#ffb020;--byp:#c06bff;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[data-theme=matrix]{--bg:#020a05;--panel:#06140b;--text:#c9ffd8;--muted:#4fae6d;--line:#0f3a1d;--accent:#00ff66;--ok:#00ff66;--bad:#ff3b3b;--warn:#e6d200;--byp:#ff5ce1;--font:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace}
+[data-theme=crimson]{--bg:#12090b;--panel:#1c0e12;--text:#f6e9eb;--muted:#b08a91;--line:#3a1a22;--accent:#ff3d5a;--ok:#4ade80;--bad:#ff3d5a;--warn:#fbbf24;--byp:#e879f9;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[data-theme=arctic]{--bg:#f3f6fb;--panel:#fff;--text:#0f1b33;--muted:#5d6b86;--line:#dde4f0;--accent:#2457e6;--ok:#0f9d6b;--bad:#d9304f;--warn:#c77700;--byp:#8e3fd1;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[data-theme=violet]{--bg:#100b1f;--panel:#1a1233;--text:#efe9ff;--muted:#9a8bc7;--line:#2f2358;--accent:#a574ff;--ok:#38e0b0;--bad:#ff5d8f;--warn:#ffc14d;--byp:#5cc8ff;--font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[data-theme=classic]{--bg:#f6f1e7;--panel:#fffdf8;--text:#1a2233;--muted:#6a675e;--line:#e4dac6;--accent:#1f3a5f;--ok:#2f7d5b;--bad:#a8323e;--warn:#b7791f;--byp:#6b4c9a;--head:Georgia,"Times New Roman",serif}
+h1,h2,.finding h3,header.top b{font-family:var(--head,var(--font))}
+[data-theme=classic] h1{font-weight:600;letter-spacing:-.01em}
+[data-theme=classic] h2{font-weight:600;padding-bottom:8px;border-bottom:1px solid var(--line);position:relative}
+[data-theme=classic] h2::after{content:"";position:absolute;left:0;bottom:-1px;width:56px;height:2px;background:#b08d4a}
+[data-theme=classic] .tag{color:#8a6d2f;border-color:#b08d4a;background:#fbf5e6}
+[data-theme=classic] .card{box-shadow:0 1px 2px rgba(60,45,20,.06),0 8px 24px -12px rgba(60,45,20,.12);border-radius:10px}
+[data-theme=classic] .kpi .n{font-family:var(--head);font-weight:600}
+[data-theme=classic] header.top{background:rgba(246,241,231,.88)}
+[data-theme=classic] .finding{border-left-color:#b08d4a}
+[data-theme=classic] .finding.c{border-left-color:var(--bad)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55;transition:background .3s,color .3s}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+header.top b{letter-spacing:.08em;font-size:14px}
+header.top nav{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+header.top nav a{color:var(--muted);text-decoration:none;font-size:13px;padding:5px 10px;border-radius:8px}
+header.top nav a:hover{color:var(--text);background:var(--panel)}
+.themes{display:flex;gap:6px}
+.themes button{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
+.themes button.on{border-color:var(--text)}
+main{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+.hero{padding:34px 0 10px}
+.tag{display:inline-block;font-size:12px;letter-spacing:.1em;color:var(--accent);border:1px solid var(--accent);border-radius:99px;padding:3px 12px}
+h1{font-size:clamp(28px,5vw,46px);margin:14px 0 8px;line-height:1.1}
+h2{font-size:22px;margin:46px 0 6px}
+h2 small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:4px}
+.lead{color:var(--muted);max-width:760px;font-size:16px}
+.meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px;margin-top:14px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-top:26px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.kpi .n{font-size:38px;font-weight:700;line-height:1.1}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .s{font-size:12px;margin-top:6px;color:var(--muted)}
+.two{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.scroll{overflow-x:auto}
+.bar{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--line)}
+.bar span{display:block;height:100%}
+.row{display:grid;grid-template-columns:90px 1fr 60px;gap:10px;align-items:center;margin:12px 0;font-size:13px}
+.finding{border-left:4px solid var(--accent)}
+.finding.c{border-left-color:var(--bad)}
+.finding h3{margin:0 0 6px;font-size:16px}
+.finding p{margin:0;color:var(--muted);font-size:14px}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+input[type=search]{flex:1;min-width:180px;background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit}
+.chip{background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:7px 14px;cursor:pointer;font:inherit;font-size:13px}
+.chip.on{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500;cursor:pointer;white-space:nowrap}
+tr.r{cursor:pointer}
+tr.r:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.v{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;letter-spacing:.03em}
+.D{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)}
+.S{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+.C{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}
+.B{background:color-mix(in srgb,var(--byp) 22%,transparent);color:var(--byp)}
+.detail td{background:color-mix(in srgb,var(--panel) 70%,var(--bg));color:var(--muted);padding:14px 16px;line-height:1.6}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+.tip{position:fixed;pointer-events:none;background:var(--text);color:var(--bg);padding:5px 9px;border-radius:7px;font-size:12px;z-index:50;display:none}
+ul.rec{padding-left:18px;margin:0}
+ul.rec li{margin:8px 0;color:var(--muted)}
+ul.rec b{color:var(--text)}
+.note{font-size:13px;color:var(--muted)}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 0}
+@media print{header.top,.tools{display:none}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><b>FUZZPICKLE</b>
+<nav><a href="#overview">Overview</a><a href="#charts">Analytics</a><a href="#findings">Findings</a><a href="#explorer">Explorer</a><a href="#actions">Actions</a><a href="#method">Method</a></nav>
+<div class="themes" id="themes" title="Switch theme"></div></header>
+<main>
+<section class="hero" id="overview">
+<span class="tag">SCANNER EVASION AUDIT</span>
+<h1 id="title">Pickle Scanner Stack:<br>Coverage &amp; Blind-Spot Report</h1>
+<p class="lead" id="lead">Report generated by FuzzPickle.</p>
+<div class="meta"><span id="scanid">Scan ID</span><span>Generated by FuzzPickle</span><span>Engines: PickleScan · ModelScan · Fickling</span></div>
+<div class="grid kpis" id="kpis"></div>
+</section>
+
+<h2 id="charts">Analytics<small>Every figure is computed live from the raw scan data embedded in this page.</small></h2>
+<div class="grid two">
+<div class="card"><b>Risk tier distribution</b><div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:10px"><svg id="donut" width="190" height="190" viewBox="0 0 42 42"></svg><div class="legend" id="donutLeg" style="flex-direction:column;gap:8px;font-size:13px"></div></div><p class="note">Click a legend item to filter the Explorer.</p></div>
+<div class="card"><b>Verdict mix per scanner</b><div id="bars"></div><div class="legend"><span><i style="background:var(--ok)"></i>Detected</span><span><i style="background:var(--bad)"></i>Missed (SAFE)</span><span><i style="background:var(--warn)"></i>Crashed</span><span><i style="background:var(--byp)"></i>Bypassed</span></div></div>
+<p class="note" style="margin-top:10px;">Note: 'SAFE (BYPASSED)' indicates the scanner silently skipped the file. 'CRASH' indicates the scanner failed to parse the file entirely, which is an availability bug, not a detection.</p>
+</div>
+<div class="card" style="margin-top:14px"><b>Detection heatmap</b> <span class="note">· each column is one file, each row one scanner · hover for details</span>
+<div class="scroll"><svg id="heat"></svg></div></div>
+<div class="grid two" style="margin-top:14px">
+<div class="card"><b>Detection consensus</b><p class="note">How many of the three engines flagged each file as dangerous.</p><div id="consensus"></div></div>
+<div class="card"><b>Scanner reliability</b><p class="note">Share of files where the scanner returned a usable verdict (no crash).</p><div id="reliab"></div></div>
+</div>
+
+<h2 id="findings">Key findings<small>What the numbers mean in practice</small></h2>
+<div class="grid" id="findList"></div>
+
+<h2 id="explorer">File explorer<small>Search, filter and click any row for an explanation.</small></h2>
+<div class="tools"><input type="search" id="q" placeholder="Search file name…"><div id="chips" style="display:flex;gap:8px;flex-wrap:wrap"></div></div><table><thead><tr><th data-k="file">File ↕</th><th data-k="p">PickleScan</th><th data-k="m">ModelScan</th><th data-k="f">Fickling</th><th>Execution</th><th data-k="tier">Risk tier ↕</th></tr></thead><tbody id="tb"></tbody></table>
+
+<h2 id="actions">Recommendations<small>Prioritised by impact</small></h2>
+<div class="card"><ul class="rec">
+<li><b>1. Never use pickle for untrusted models.</b> Prefer safetensors, ONNX or GGUF. This removes the whole attack class instead of trying to filter it.</li>
+<li><b>2. Treat a scanner “SAFE” as “no known signature”, not as proof of safety.</b> Nine files evaded every engine; one of them executed code.</li>
+<li><b>3. Fail closed.</b> A crash, timeout or unsupported format must block the artifact, never pass it through.</li>
+<li><b>4. Layer defences.</b> Combine scanners with a strict allow-list of importable globals, plus sandboxed loading (container, no network, read-only FS, dropped privileges).</li>
+<li><b>5. Block dangerous modules by default:</b> <code>os</code>, <code>subprocess</code>, <code>runpy</code>, <code>importlib</code>, <code>ctypes</code>, <code>pydoc</code>, <code>io</code>, <code>codecs</code>, <code>http.client</code>, <code>builtins.eval</code>.</li>
+<li><b>6. Validate by content, not extension or magic bytes.</b> <code>.npy</code>, <code>.txt</code>, <code>.p</code> and spoofed headers were all accepted as benign.</li>
+<li><b>7. Report upstream.</b> Share these samples with scanner maintainers and re-run FuzzPickle after each release as a regression suite.</li>
+</ul></div>
+
+<h2 id="method">Methodology &amp; caveats<small>Read before quoting these numbers</small></h2>
+<div class="card"><ul class="rec">
+<li>All files are treated as malicious test cases, so “SAFE” is a false negative and “DANGEROUS” is a true positive.</li>
+<li>Only files marked with `EXECUTED` have execution confirmed. The others were <b>not executed</b>, so “blind spot” means “not flagged”, not “confirmed exploitable”.</li>
+<li>The source report labels a Fickling <code>CRASH</code> as “flagged SAFE” in its Full Blind Spot wording. This dashboard keeps crash as its own category, which is more accurate. It does not change the headline: no engine raised an alert on those files.</li>
+<li>Results reflect specific scanner versions and configuration on one run. Re-test after upgrades.</li>
+</ul></div>
+<footer>Interactive dashboard built from FuzzPickle · print-friendly (Ctrl/Cmd+P)</footer>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+const DATA = __DATA__;
+const INTEL = __INTEL__;
+let isAttack = DATA.length > 0 && DATA[0].technique !== undefined;
+
+const L={D:"DANGEROUS",S:"SAFE",C:"CRASH",B:"SAFE (BYPASSED)"},ENG=["PickleScan","ModelScan","Fickling"],KEY=["p","m","f"];
+const TIERS={rce:["Confirmed RCE","var(--bad)"],und:["Undetected (no alert)","var(--warn)"],one:["Single-engine catch","var(--accent)"],avail:["Availability Bug","var(--muted)"]};
+
+// Process Data
+const data=DATA.map(d=>{
+    let f = isAttack ? d.technique : d.file;
+    let p = d.picklescan ? d.picklescan[0] : 'S';
+    let m = d.modelscan ? d.modelscan[0] : 'S';
+    let fk = d.fickling ? d.fickling[0] : 'S';
+    let ex = d.execution_proof === "EXECUTED";
+    
+    if(d.picklescan === "SAFE (BYPASSED)") p = 'B';
+    if(d.modelscan === "SAFE (BYPASSED)") m = 'B';
+    if(d.fickling === "SAFE (BYPASSED)") fk = 'B';
+
+    let hits = [p,m,fk].filter(c => c=='D').length;
+    let tier = "one";
+    if (ex) tier = "rce";
+    else if (hits == 0) {
+        if(p=='C' || m=='C' || fk=='C') tier = "avail";
+        else tier = "und";
+    }
+    return {file: f, p, m, f: fk, ex, hits, tier};
+});
+
+const N=data.length,$=id=>document.getElementById(id),pct=(a,b)=>(a/b*100).toFixed(1)+"%";
+const cnt=(k,c)=>data.filter(d=>d[k]==c).length;
+const tc=t=>data.filter(d=>d.tier==t).length;
+
+// Dynamic Header
+if(isAttack) {
+    $("title").innerHTML = "Attack Arsenal:<br>Weaponized Exploits";
+    $("lead").textContent = "This report tests specific real-world attack techniques against the scanners to prove which bypasses actually execute code.";
+    $("scanid").innerHTML = "Scan ID <code>" + DATA[0].technique + "</code>";
+} else {
+    $("scanid").innerHTML = "Scan ID <code>" + DATA[0].file + "</code>";
+}
+
+// themes
+const TH=[["classic","#b08d4a"],["obsidian","#4f8cff"],["matrix","#00ff66"],["crimson","#ff3d5a"],["arctic","#e8eefc"],["violet","#a574ff"]];
+TH.forEach(([n,c])=>{const b=document.createElement("button");b.style.background=c;b.title=n[0].toUpperCase()+n.slice(1);b.onclick=()=>setT(n);b.dataset.t=n;$("themes").append(b)});
+function setT(n){document.documentElement.dataset.theme=n;[...$("themes").children].forEach(b=>b.classList.toggle("on",b.dataset.t==n));try{localStorage.setItem("fp-theme",n)}catch(e){}}
+let st=null;try{st=localStorage.getItem("fp-theme")}catch(e){}
+setT(st&&TH.some(t=>t[0]==st)?st:"classic");
+
+// KPIs
+const pD=cnt("p","D"),mB=data.filter(d=>d.m=="B").length,mC=cnt("m","C"),fC=cnt("f","C");
+$("kpis").innerHTML=[
+[N,"Files tested","3 scanners each","var(--accent)"],
+[tc("rce"),"Confirmed RCE","payload executed, scanners missed it","var(--bad)"],
+[data.filter(d=>d.ex).length,"Payloads Executed","total payloads that ran successfully","var(--bad)"],
+[tc("und"),"Evaded every engine","no DANGEROUS verdict at all","var(--warn)"],
+[pct(pD,N),"Best detection rate","PickleScan only ("+pD+"/"+N+")","var(--ok)"],
+[mC+fC,"Scanner crashes","ModelScan "+mC+" · Fickling "+fC,"var(--warn)"],
+[mB,"Format bypasses","ModelScan skipped the file","var(--byp)"]
+].map(k=>`<div class="card kpi"><div class="n" style="color:${k[3]}">${k[0]}</div><div class="l">${k[1]}</div><div class="s">${k[2]}</div></div>`).join("");
+
+// donut
+const dn=$("donut");let off=0,h='<circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--line)" stroke-width="6"/>';
+Object.keys(TIERS).forEach(t=>{const v=tc(t)/N*100;if(v==0)return;h+=`<circle cx="21" cy="21" r="15.9" fill="none" stroke="${TIERS[t][1]}" stroke-width="6" stroke-dasharray="${v} ${100-v}" stroke-dashoffset="${25-off}" style="cursor:pointer" data-t="${t}" title="${TIERS[t][0]}: ${tc(t)} files (${pct(tc(t),N)})"/>`;off+=v});
+h+=`<text x="21" y="21.5" text-anchor="middle" font-size="7" font-weight="700" fill="var(--text)">${N}</text><text x="21" y="26" text-anchor="middle" font-size="2.6" fill="var(--muted)">FILES</text>`;dn.innerHTML=h;
+$("donutLeg").innerHTML=Object.keys(TIERS).map(t=>{if(tc(t)==0)return"";return`<div style="cursor:pointer" data-t="${t}"><i style="display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:8px;background:${TIERS[t][1]}"></i>${TIERS[t][0]}: <b style="color:var(--text)">${tc(t)}</b> (${pct(tc(t),N)})</div>`}).join("");
+document.querySelectorAll("[data-t]").forEach(e=>{if(e.closest("#donut,#donutLeg"))e.onclick=()=>{setF(e.dataset.t);$("explorer").scrollIntoView()}});
+
+// stacked bars
+const COL={D:"var(--ok)",S:"var(--bad)",C:"var(--warn)",B:"var(--byp)"};
+$("bars").innerHTML=ENG.map((e,i)=>{const k=KEY[i];return`<div class="row"><span>${e}</span><div class="bar">${"DSCB".split("").map(c=>{const n=cnt(k,c);return n?`<span title="${L[c]}: ${n}" style="width:${n/N*100}%;background:${COL[c]}"></span>`:""}).join("")}</div><b>${cnt(k,"D")}/${N}</b></div>`}).join("");
+
+// heatmap
+const cw=20,lw=84;let hm=`<svg></svg>`;let s=`<g font-size="11" fill="var(--muted)">`;ENG.forEach((e,i)=>s+=`<text x="0" y="${i*cw+15}">${e}</text>`);s+="</g>";
+data.forEach((d,j)=>KEY.forEach((k,i)=>s+=`<rect x="${lw+j*cw}" y="${i*cw}" width="${cw-3}" height="${cw-3}" rx="4" fill="${COL[d[k]]}" data-i="${j}" data-e="${i}" style="opacity:.9"/>`));
+const hs=$("heat");hs.setAttribute("width",lw+N*cw);hs.setAttribute("height",3*cw+4);hs.innerHTML=s;
+const tip=$("tip");hs.onmousemove=e=>{const r=e.target;if(r.dataset.i==null){tip.style.display="none";return}const d=data[r.dataset.i],k=KEY[r.dataset.e];tip.textContent=d.file+" · "+ENG[r.dataset.e]+": "+L[d[k]];tip.style.display="block";tip.style.left=e.clientX+12+"px";tip.style.top=e.clientY+14+"px"};hs.onmouseleave=()=>tip.style.display="none";
+
+// consensus + reliability
+$("consensus").innerHTML=[3,2,1,0].map(n=>{const c=data.filter(d=>d.hits==n).length;return`<div class="row"><span>${n} of 3</span><div class="bar"><span style="width:${c/N*100}%;background:${n?"var(--ok)":"var(--bad)"}"></span></div><b>${c}</b></div>`}).join("")+`<p class="note">No file was flagged by more than one engine, so a single scanner failure leaves no safety net.</p>`;
+$("reliab").innerHTML=ENG.map((e,i)=>{const ok=N-cnt(KEY[i],"C");return`<div class="row"><span>${e}</span><div class="bar"><span style="width:${ok/N*100}%;background:var(--accent)"></span></div><b>${pct(ok,N)}</b></div>`}).join("");
+
+// findings
+$("findList").innerHTML=[
+["c",tc("rce")+" files executed code", "These files bypassed scanners and successfully ran the malicious payload."],
+["c",tc("und")+" files raised zero alerts", "These files were not flagged by any engine and execution was not tested."],
+["", "PickleScan is the only scanner that ever alerts", `It flagged ${pD} of ${N} files (${pct(pD,N)}). ModelScan and Fickling returned DANGEROUS on 0 files in this run.`],
+["", "Crashes are an availability risk", "A crash can stall a CI/CD or model-hub pipeline. If the pipeline treats errors as pass, a crash becomes a bypass."]
+].map(f=>`<div class="card finding ${f[0]}"><h3>${f[1]}</h3><p>${f[2]}</p></div>`).join("");
+
+// explorer
+let flt="all",sortK="file",asc=1;
+const CH=[["all","All ("+N+")"],["rce","Confirmed RCE"],["und","Undetected"],["one","Single-engine"],["avail","Availability Bug"]];
+$("chips").innerHTML=CH.map(c=>`<button class="chip" data-f="${c[0]}">${c[1]}</button>`).join("");
+function setF(f){flt=f;document.querySelectorAll(".chip").forEach(c=>c.classList.toggle("on",c.dataset.f==f));draw()}
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>setF(c.dataset.f));
+document.querySelectorAll("th").forEach(t=>t.onclick=()=>{asc=sortK==t.dataset.k?-asc:1;sortK=t.dataset.k;draw()});
+$("q").oninput=draw;
+const why = d => {
+    let name = isAttack ? d.file : d.file;
+    let intel = isAttack ? (INTEL[name] || "No known CVE correlation.") : "";
+    
+    let exec_status = d.ex 
+        ? "<strong style='color:var(--bad);'>🔴 CONFIRMED RCE:</strong> The payload successfully executed on the system. This is a weaponized exploit." 
+        : "<strong style='color:var(--warn);'>🟠 POTENTIAL BYPASS:</strong> The payload was not executed, so impact is unverified.";
+
+    if (!isAttack) {
+        return d.ex ? "Payload execution was confirmed. Treat as a verified scanner bypass." : d.tier == "und" ? "No engine returned DANGEROUS. Execution was not tested, so impact is unverified." : d.tier == "avail" ? "The scanner crashed trying to parse this file." : `Only PickleScan flagged this file. ModelScan: ${L[d.m]}. Fickling: ${L[d.f]}.`;
+    } else {
+        return `
+            <div style="margin-bottom:8px;">${exec_status}</div>
+            <div><strong>Why it bypassed the scanners:</strong><br>${intel.replace(/\n/g, '<br>')}</div>
+        `;
+    }
+};
+
+function draw(){const q=$("q").value.toLowerCase();let r=data.filter(d=>(flt=="all"||d.tier==flt)&&d.file.toLowerCase().includes(q));
+r.sort((a,b)=>(a[sortK]>b[sortK]?1:-1)*asc);
+$("tb").innerHTML=r.map((d,i)=>`<tr class="r" data-i="${i}"><td><code>${d.file}</code></td>${KEY.map(k=>`<td><span class="v ${d[k]}">${L[d[k]]}</span></td>`).join("")}<td>${d.ex ? "🔴 EXECUTED" : "⚪ NOT EXECUTED"}</td><td style="color:${TIERS[d.tier][1]}">${TIERS[d.tier][0]}</td></tr><tr class="detail" hidden><td colspan="6">${why(d)}</td></tr>`).join("")||`<tr><td colspan="6" class="note">No files match.</td></tr>`;
+document.querySelectorAll("tr.r").forEach(t=>t.onclick=()=>{const n=t.nextElementSibling;n.hidden=!n.hidden})}
+setF("all");
+</script>
+</body>
+</html>
